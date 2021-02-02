@@ -1,0 +1,100 @@
+function IsGrown()
+    local isBlock, blockStat
+    isBlock, blockStat = turtle.inspectDown()    
+    if(blockStat.metadata == 7)
+    then
+        return true
+    end
+    return false 
+end
+
+function SelectSeeds()
+	for i = 1,17,1 do
+		turtle.select(i)
+		if(turtle.getItemDetail() ~= null) then
+			if(turtle.getItemDetail().name == "minecraft:wheat_seeds") then
+				break
+			end
+		end
+	end
+end
+
+function EmptyInventory()
+	local returnVal = true
+	for i = 1,16,1 do
+		turtle.select(i)
+		if(turtle.drop() == false) then
+		returnVal = false
+		end
+	end
+	return returnVal
+end
+
+function Refuel()
+	if(turtle.getFuelLevel() < 81) then
+		turtle.suckUp(2)
+		turtle.refuel()
+	end
+end
+
+function farmItem()
+    if(IsGrown() == true) then
+		turtle.digDown()
+		turtle.suckDown()
+		SelectSeeds()
+		turtle.placeDown()
+    end
+end
+
+function FarmGrid(x, y)
+    for i = 0,x,1 do
+		for j = 0,y-1,1 do
+			farmItem()
+			turtle.forward()
+		end
+		farmItem()
+		if(i % 2 == 0) then
+            turtle.turnLeft()
+            turtle.forward()
+            turtle.turnLeft()
+        else
+            turtle.turnRight()
+            turtle.forward()
+            turtle.turnRight()
+        end
+    end
+end
+
+
+local breakLoop = false;
+while(true) do
+
+	if(IsGrown == true) then
+		FarmGrid(8,8)
+		for i = 0,8,1 do
+			turtle.forward()
+		end
+		turtle.turnLeft()
+		for i = 0,6,1 do
+			turtle.forward()
+		end
+		turtle.turnRight()
+		if(EmptyInventory() == false) then
+		breakLoop = true
+		end
+		turtle.turnLeft()
+		turtle.turnLeft()
+		
+		turtle.forward()
+		turtle.forward()
+		turtle.turnRight()
+		Refuel()
+		turtle.turnLeft()
+		turtle.turnLeft()
+		if(breakLoop == true) then
+			break
+		end
+	else
+	os.sleep(60)
+	end
+end
