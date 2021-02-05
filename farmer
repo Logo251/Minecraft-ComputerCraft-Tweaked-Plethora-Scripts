@@ -1,38 +1,52 @@
+local farmSeed = arg[1]
+local farmSeed = "minecraft:" .. farmSeed
+
+function goForward(distance)
+	for i = 1,distance,1 do
+		turtle.forward()
+	end
+end
+
 function IsGrown()
     local isBlock, blockStat
-    isBlock, blockStat = turtle.inspectDown()    
-    if(blockStat.metadata == 7)
+    isBlock, blockStat = turtle.inspectDown()
+	if(blockStat.state == nil) then return false end
+    if( blockStat.state.age == 7)
     then
         return true
     end
-    return false 
+    return false
 end
 
-function SelectSeeds()
-	for i = 1,17,1 do
+function SelectSeeds(seed)
+	if(turtle.getItemDetail() ~= nil and turtle.getItemDetail().name == seed) then
+		return
+	end
+	for i = 1,16,1 do
 		turtle.select(i)
-		if(turtle.getItemDetail() ~= null) then
-			if(turtle.getItemDetail().name == "minecraft:wheat_seeds") then
-				break
+		if(turtle.getItemDetail() ~= nil) then
+			if(turtle.getItemDetail().name == seed) then
+				return
 			end
 		end
 	end
 end
 
 function EmptyInventory()
-	local returnVal = true
+	local saveSeed = false
 	for i = 1,16,1 do
 		turtle.select(i)
-		if(turtle.drop() == false) then
-		returnVal = false
+		if(saveSeed == false and turtle.getItemDetail() ~= nil and turtle.getItemDetail().name == farmSeed) then
+		saveSeed = true
+		else
+		turtle.drop()
 		end
 	end
-	return returnVal
 end
 
 function Refuel()
-	if(turtle.getFuelLevel() < 81) then
-		turtle.suckUp(2)
+	if(turtle.getFuelLevel() < 200) then
+		turtle.suckUp(3)
 		turtle.refuel()
 	end
 end
@@ -41,19 +55,23 @@ function farmItem()
     if(IsGrown() == true) then
 		turtle.digDown()
 		turtle.suckDown()
-		SelectSeeds()
+		SelectSeeds(farmSeed)
 		turtle.placeDown()
     end
+	if(turtle.inspectDown() == false) then
+		SelectSeeds(farmSeed)
+		turtle.placeDown()
+	end
 end
 
 function FarmGrid(x, y)
-    for i = 0,x,1 do
-		for j = 0,y-1,1 do
+    for i = 1,x,1 do
+		for j = 1,y-1,1 do
 			farmItem()
 			turtle.forward()
 		end
 		farmItem()
-		if(i % 2 == 0) then
+		if(i % 2 == 1) then
             turtle.turnLeft()
             turtle.forward()
             turtle.turnLeft()
@@ -66,27 +84,47 @@ function FarmGrid(x, y)
 end
 
 
-local breakLoop = false;
 while(true) do
 
-	if(IsGrown == true) then
-		FarmGrid(8,8)
-		for i = 0,8,1 do
-			turtle.forward()
-		end
+	if(IsGrown() == true) then
+		FarmGrid(9,9)
+		
+		--Go to the next farm
 		turtle.turnLeft()
-		for i = 0,6,1 do
-			turtle.forward()
-		end
+		goForward(9)
+		turtle.turnLeft()
+		goForward(2)
+		turtle.down()
+		
+		--Farm next farm
+		FarmGrid(9,9)
+		
+		--Go to the next farm
+		turtle.turnLeft()
+		goForward(9)
+		turtle.turnLeft()
+		goForward(2)
+		turtle.down()
+		
+		--Farm next farm
+		FarmGrid(9,9)
+		
+		--Return to base
+		turtle.up()
+		turtle.up()
+		turtle.turnLeft()
+		goForward(7)
 		turtle.turnRight()
+		goForward(28)
+		
+		--Deposit goods
 		if(EmptyInventory() == false) then
 		breakLoop = true
 		end
-		turtle.turnLeft()
-		turtle.turnLeft()
 		
-		turtle.forward()
-		turtle.forward()
+		--go to dock
+		turtle.turnLeft()
+		goForward(2)
 		turtle.turnRight()
 		Refuel()
 		turtle.turnLeft()
